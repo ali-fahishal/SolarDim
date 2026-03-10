@@ -1,5 +1,6 @@
 from langchain.tools import tool
-from core.storage import  get_equipements, get_localisation, get_composants
+from config import TARIF_KWH_DEFAULT_FCFA
+from core.storage import get_equipements, get_localisation, get_composants, get_parametres
 from core.sizing import (
     calculer_dimensionnement_complet,
     calculer_rentabilite
@@ -57,22 +58,23 @@ def outil_dimensionnement(puissance_panneau_wc: float = 400, tension_batterie_v:
 
 
 @tool
-def outil_rentabilite(puissance_installee_kwc: float, tarif_kwh: float = 0.15) -> dict:
+def outil_rentabilite(puissance_installee_kwc: float, tarif_kwh: float = TARIF_KWH_DEFAULT_FCFA) -> dict:
     """
-    Calcule l'étude de rentabilité sur 20 ans.
+    Calcule l'étude de rentabilité sur 10 ans.
 
     Paramètres :
     - puissance_installee_kwc : puissance totale installée en kWc
-    - tarif_kwh               : prix du kWh en devise locale (défaut 0.15)
+    - tarif_kwh               : prix du kWh en FCFA (défaut 150)
     """
     localisation = get_localisation()
     if not localisation:
         return {"erreur": "Localisation manquante."}
 
+    parametres = get_parametres()
     production_annuelle = localisation["irradiation_annuelle_kwh"] * puissance_installee_kwc
 
     return calculer_rentabilite(
-        puissance_installee_kwc=puissance_installee_kwc,
+        prix_total_installation=float(parametres["prix_total_installation"]),
         production_annuelle_kwh=production_annuelle,
         tarif_kwh=tarif_kwh
     )
