@@ -14,6 +14,19 @@ logger = logging.getLogger(__name__)
 
 
 # ==============================
+# CACHE API (TTL 24h — données stables)
+# ==============================
+@st.cache_data(ttl=86400, show_spinner=False)
+def _geocoder_avec_cache(ville: str) -> dict | None:
+    return geocoder_ville(ville)
+
+
+@st.cache_data(ttl=86400, show_spinner=False)
+def _solar_data_avec_cache(latitude: float, longitude: float) -> dict | None:
+    return get_solar_data(latitude, longitude)
+
+
+# ==============================
 # UTILITAIRES
 # ==============================
 def _valeur_ou_defaut(data: dict, cle: str, defaut: float = 0.0) -> float:
@@ -59,7 +72,7 @@ def afficher_localisation() -> None:
             return
 
         with st.spinner("Recherche des coordonnées..."):
-            coords = geocoder_ville(ville)
+            coords = _geocoder_avec_cache(ville)
 
         if coords is None:
             st.error("❌ Lieu non trouvé. Essayez un nom plus précis.")
@@ -68,7 +81,7 @@ def afficher_localisation() -> None:
         st.success(f"✅ Lieu trouvé : {coords['ville'].split(',')[0]}")
 
         with st.spinner("Récupération des données solaires via PVGIS..."):
-            solaire = get_solar_data(coords["latitude"], coords["longitude"])
+            solaire = _solar_data_avec_cache(coords["latitude"], coords["longitude"])
 
         if solaire is None:
             st.error("❌ Données solaires indisponibles pour ce lieu.")
