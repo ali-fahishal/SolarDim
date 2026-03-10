@@ -33,7 +33,7 @@ def outil_dimensionnement(puissance_panneau_wc: float = PUISSANCE_PANNEAU_DEFAUL
     Utilise les données de la base (équipements + localisation).
 
     Paramètres :
-    - puissance_panneau_wc : puissance unitaire du panneau en Wc (défaut 400)
+    - puissance_panneau_wc : puissance unitaire du panneau en Wc (défaut 500)
     - tension_batterie_v   : tension du parc batterie en V (12, 24 ou 48)
     """
     equipements = get_equipements()
