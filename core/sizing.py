@@ -1,19 +1,20 @@
 import math
 import logging
+from config import (
+    PERFORMANCE_RATIO_DEFAULT,
+    PUISSANCE_PANNEAU_DEFAULT_WC,
+    TENSION_BATTERIE_DEFAULT_V,
+    PROFONDEUR_DECHARGE_DEFAULT,
+    AUTONOMIE_DEFAULT_JOURS,
+    COEFFICIENT_AERATION_DEFAULT,
+    HSP_MIN,
+    HSP_MAX,
+    FACTEUR_SECURITE_ONDULEUR,
+    HSP_EQUIVALENT_FACTURES,
+    TARIF_KWH_DEFAULT_FCFA,
+)
 
 logger = logging.getLogger(__name__)
-
-# ==============================
-# CONSTANTES
-# ==============================
-PERFORMANCE_RATIO_DEFAULT = 0.65
-PUISSANCE_PANNEAU_DEFAULT_WC = 500
-TENSION_BATTERIE_DEFAULT_V = 48
-PROFONDEUR_DECHARGE_DEFAULT = 0.95
-AUTONOMIE_DEFAULT_JOURS = 1
-COEFFICIENT_AERATION_DEFAULT = 1.1
-HSP_MIN = 0.1
-HSP_MAX = 12.0
 
 
 # ==============================
@@ -301,7 +302,7 @@ def calculer_configuration_batterie(
 def calculer_rentabilite(
     prix_total_installation: float,
     production_annuelle_kwh: float,
-    tarif_kwh: float = 150,
+    tarif_kwh: float = TARIF_KWH_DEFAULT_FCFA,
 ) -> dict:
     """
     Calcule l'étude de rentabilité sur 10 ans.
@@ -366,7 +367,7 @@ def calculer_dimensionnement_complet(
         source_conso = "equipements"
     elif conso_journaliere_kwh:
         conso_j_wh = float(conso_journaliere_kwh) * 1000
-        puissance_totale_w = (conso_j_wh / 8) * 1.25
+        puissance_totale_w = (conso_j_wh / HSP_EQUIVALENT_FACTURES) * FACTEUR_SECURITE_ONDULEUR
         source_conso = "factures"
     else:
         raise ValueError("Fournissez soit les équipements soit la consommation journalière.")
@@ -386,7 +387,7 @@ def calculer_dimensionnement_complet(
     nb_panneaux = calculer_nombre_panneaux(puissance_crete, puissance_panneau_wc)
     puissance_installee = nb_panneaux * puissance_panneau_wc
     batterie = calculer_batterie(conso_j_wh, tension_batterie_v=tension_batterie_v)
-    puissance_onduleur_w = puissance_totale_w * 1.25
+    puissance_onduleur_w = puissance_totale_w * FACTEUR_SECURITE_ONDULEUR
 
     result = {
         "source_consommation": source_conso,

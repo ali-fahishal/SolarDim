@@ -5,6 +5,7 @@ import os
 import logging
 from contextlib import contextmanager
 from pathlib import Path
+from config import TARIF_KWH_DEFAULT_FCFA
 
 logger = logging.getLogger(__name__)
 
@@ -420,7 +421,7 @@ def get_parametres() -> dict:
     """Retourne les paramètres économiques."""
     with get_db() as conn:
         row = conn.execute("SELECT * FROM parametres WHERE id = 1").fetchone()
-    return dict(row) if row else {"tarif_kwh": 150, "prix_total_installation": 0}
+    return dict(row) if row else {"tarif_kwh": TARIF_KWH_DEFAULT_FCFA, "prix_total_installation": 0}
 
 
 def sauvegarder_parametres(
