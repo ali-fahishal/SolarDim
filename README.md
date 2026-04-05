@@ -1,11 +1,11 @@
-# ☀️ SolarDim Pro
+# ☀️ Raana
 ### Outil intelligent de dimensionnement de systèmes photovoltaïques off-grid
 
 ---
 
 ## 📋 Description
 
-SolarDim Pro est une application web dédiée aux techniciens en énergie solaire, 
+Raana est une application web dédiée aux techniciens en énergie solaire, 
 permettant de dimensionner rapidement et précisément un système photovoltaïque 
 off-grid à partir de factures d'électricité ou d'une liste d'équipements.
 

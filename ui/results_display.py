@@ -154,7 +154,7 @@ def afficher_metriques_dimensionnement() -> None:
         st.download_button(
             label="📥 Exporter en PDF",
             data=pdf_bytes,
-            file_name=f"dimensionnement_{ville}_{datetime.now().strftime('%Y%m%d')}.pdf",
+            file_name=f"raana_{ville}_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf",
             mime="application/pdf",
             use_container_width=True,
             type="primary"

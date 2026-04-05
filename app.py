@@ -5,7 +5,7 @@ from ui.style import get_css
 from core.storage import initialiser_stockage
 
 st.set_page_config(
-    page_title="SolarDim Pro",
+    page_title="Raana",
     page_icon="☀️",
     layout="wide",
     initial_sidebar_state="auto"
@@ -23,9 +23,9 @@ if "page_active" not in st.session_state:
 with st.sidebar:
     st.markdown("""
         <div style='text-align:center; padding: 20px 0 20px 0;'>
-            <div style='font-size:48px;'></div>
-            <div style='font-size:32px; font-weight:bold; color:white;'>SolarDim</div>
-            <div style='font-size:16px; color:vert;'>Fahishal</div>
+            <div style='font-size:48px;'>☀️</div>
+            <div style='font-size:28px; font-weight:bold; color:white; letter-spacing:2px;'>Raana</div>
+            <div style='font-size:13px; color:#aaa;'>Fahishal</div>
         </div>
     """, unsafe_allow_html=True)
 
@@ -38,14 +38,6 @@ with st.sidebar:
         ("🤖", "Analyse IA"),
         ("📖", "Guide & Notions")
     ]
-
-    if "page_active" not in st.session_state:
-        st.session_state.page_active = "Accueil"
-
-    # Correction si l'ancien nom est en mémoire
-    noms_valides = [nom for _, nom in pages]
-    if st.session_state.page_active not in noms_valides:
-        st.session_state.page_active = "Accueil"
 
     for icone, nom in pages:
         if st.button(

@@ -401,7 +401,7 @@ def get_css():
         .result-table thead th {
             padding: 12px 16px;
             text-align: left;
-            font-size: 24px;
+            font-size: 14px;
             font-weight: 600;
             letter-spacing: 0.5px;
         }
