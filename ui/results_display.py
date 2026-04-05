@@ -208,6 +208,41 @@ def afficher_graphe_rentabilite(rentabilite: dict) -> None:
 
 def afficher_rapport_agent() -> None:
     if "dim" not in st.session_state:
-        st.info("💡 Lancez d'abord une analyse depuis l'accueil.")
+        st.info("💡 Lancez d'abord une analyse depuis l'étape **Analyse** avant de consulter l'agent.")
+        if st.button("→ Aller à l'analyse", type="primary"):
+            st.session_state.page_active = "Analyse"
+            st.rerun()
         return
-    st.info("🚧 Fonctionnalité en cours de développement — disponible prochainement.")
+
+    st.write("Posez une question à l'agent IA solaire. Il a accès à vos données de projet.")
+    st.caption("Exemples : *Optimise ma configuration*, *Explique le calcul de batterie*, *Quel panneau recommandes-tu ?*")
+
+    question = st.text_area(
+        "Votre question",
+        placeholder="Ex: Explique-moi le dimensionnement et propose des optimisations...",
+        height=100,
+        label_visibility="collapsed"
+    )
+
+    if st.button("🤖 Envoyer à l'agent", type="primary", use_container_width=True, disabled=not question.strip()):
+        with st.spinner("L'agent analyse votre projet..."):
+            try:
+                from agent.agent import creer_agent
+                agent = creer_agent()
+                result = agent.invoke({"messages": [{"role": "user", "content": question.strip()}]})
+                messages = result.get("messages", [])
+                # Récupérer le dernier message de l'agent (pas un ToolMessage)
+                reponse = ""
+                for msg in reversed(messages):
+                    if hasattr(msg, "content") and msg.content and not hasattr(msg, "tool_call_id"):
+                        reponse = msg.content
+                        break
+                if reponse:
+                    st.markdown("---")
+                    st.markdown("**Réponse de l'agent :**")
+                    st.markdown(reponse)
+                else:
+                    st.warning("L'agent n'a pas retourné de réponse textuelle.")
+            except Exception as e:
+                logger.error("Erreur agent IA : %s", e)
+                st.error(f"❌ Erreur de l'agent : {e}")
