@@ -44,26 +44,46 @@ def afficher_localisation() -> None:
 
     localisation = get_localisation()
     if localisation:
-        st.success(f"📌 Lieu actuel : **{localisation['ville'].split(',')[0]}**")
-        col1, col2, col3 = st.columns(3)
-        col1.metric("Latitude", f"{localisation['latitude']:.4f}°")
-        col2.metric("Longitude", f"{localisation['longitude']:.4f}°")
-        col3.metric("HSP moyen", f"{localisation['hsp_moyen']} h/jour")
-        st.info(f"☀️ Irradiation annuelle : **{localisation['irradiation_annuelle_kwh']} kWh/m²/an**")
+        ville_affichee = localisation['ville'].split(',')[0]
+        st.markdown(f"""
+        <div class='kpi-row' style='grid-template-columns: repeat(4, 1fr);'>
+            <div class='kpi-card dark'>
+                <div class='kpi-label'>Lieu</div>
+                <div class='kpi-value' style='font-size:18px'>{ville_affichee}</div>
+                <div class='kpi-sub'>✓ Enregistré</div>
+            </div>
+            <div class='kpi-card light'>
+                <div class='kpi-label'>HSP moyen</div>
+                <div class='kpi-value'>{localisation['hsp_moyen']}</div>
+                <div class='kpi-sub'>heures/jour</div>
+            </div>
+            <div class='kpi-card light'>
+                <div class='kpi-label'>Irradiation</div>
+                <div class='kpi-value' style='font-size:18px'>{localisation['irradiation_annuelle_kwh']}</div>
+                <div class='kpi-sub'>kWh/m²/an</div>
+            </div>
+            <div class='kpi-card light'>
+                <div class='kpi-label'>Coordonnées</div>
+                <div class='kpi-value' style='font-size:14px'>{localisation['latitude']:.3f}°</div>
+                <div class='kpi-sub'>{localisation['longitude']:.3f}° — PVGIS ✓</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
         st.divider()
 
     st.write("Rechercher un lieu :")
-    col_input, col_btn = st.columns([4, 1])
 
-    with col_input:
-        ville = st.text_input(
-            "Ville",
-            placeholder="Ex: Lomé, Abidjan, Dakar...",
-            label_visibility="collapsed",
-            max_chars=100
-        )
-    with col_btn:
-        rechercher = st.button("🔍 Rechercher", use_container_width=True)
+    with st.form("form_localisation", enter_to_submit=True):
+        col_input, col_btn = st.columns([4, 1])
+        with col_input:
+            ville = st.text_input(
+                "Ville",
+                placeholder="Ex: Lomé, Abidjan, Dakar...",
+                label_visibility="collapsed",
+                max_chars=100
+            )
+        with col_btn:
+            rechercher = st.form_submit_button("🔍 Rechercher", use_container_width=True)
 
     if rechercher and ville:
         ville = ville.strip()
@@ -108,11 +128,22 @@ def afficher_localisation() -> None:
 # ==============================
 def afficher_composants() -> None:
     """Page configurations avec quatre sous-onglets."""
+    onduleur = get_onduleur()
+    module = get_module_pv()
+    batterie = get_batterie()
+    parametres = get_parametres()
+
+    ok_onduleur = "✓" if onduleur else "—"
+    ok_module = "✓" if module else "—"
+    ok_batterie = "✓" if batterie else "—"
+    prix = float(parametres["prix_total_installation"]) if parametres else 0
+    ok_params = "✓" if prix > 0 else "—"
+
     tab_onduleur, tab_module, tab_batterie, tab_params = st.tabs([
-        "⚡ Onduleur",
-        "🔆 Module PV",
-        "🔋 Batterie",
-        "💰 Paramètres économiques"
+        f"⚡ Onduleur {ok_onduleur}",
+        f"🔆 Module PV {ok_module}",
+        f"🔋 Batterie {ok_batterie}",
+        f"💰 Paramètres éco {ok_params}"
     ])
 
     with tab_onduleur:
