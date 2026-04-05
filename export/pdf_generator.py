@@ -176,7 +176,7 @@ def generer_pdf_dimensionnement(
     # ==============================
     # EN-TÊTE
     # ==============================
-    story.append(Paragraph("SolarDim Pro", styles["Titre"]))
+    story.append(Paragraph("Raana", styles["Titre"]))
     story.append(Paragraph("Rapport de dimensionnement photovoltaique off-grid", styles["SousTitre"]))
     story.append(HRFlowable(width="100%", thickness=2, color=ORANGE))
     story.append(Spacer(1, 0.3 * cm))
@@ -303,7 +303,7 @@ def generer_pdf_dimensionnement(
     story.append(HRFlowable(width="100%", thickness=1, color=ORANGE))
     story.append(Spacer(1, 0.2 * cm))
     story.append(Paragraph(
-        f"Rapport genere par SolarDim Pro le {date_rapport}",
+        f"Rapport genere par Raana le {date_rapport}",
         styles["Footer"]
     ))
 

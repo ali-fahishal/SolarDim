@@ -1,3 +1,4 @@
+import html
 import logging
 from datetime import datetime
 import streamlit as st
@@ -21,7 +22,7 @@ def afficher_metriques_dimensionnement() -> None:
     parametres = get_parametres()
     ville = localisation["ville"].split(",")[0] if localisation else "site"
 
-    tarif = moyenne["tarif_moyen_fcfa_kwh"] if moyenne else float(parametres["tarif_kwh"])
+    tarif = moyenne["tarif_moyen_fcfa_kwh"] if (moyenne and moyenne.get("tarif_moyen_fcfa_kwh")) else float(parametres["tarif_kwh"])
     prix_installation = float(parametres["prix_total_installation"])
 
     rentabilite = None
@@ -33,115 +34,117 @@ def afficher_metriques_dimensionnement() -> None:
                 tarif_kwh=tarif,
             )
             st.session_state.rentabilite = rentabilite
-        except (ValueError, KeyError) as e:
+        except (ValueError, KeyError, TypeError) as e:
             logger.error("Erreur calcul rentabilité : %s", e)
 
     st.markdown("---")
-    col_resultats, col_graphe = st.columns(2)
 
-    # ----------------------------
-    # COLONNE GAUCHE : RÉSULTATS
-    # ----------------------------
-    with col_resultats:
-        st.subheader("⚡ Résultats du dimensionnement")
+    # ---- Zone 1 : KPI Cards ----
+    roi_class = "gray"
+    roi_value = "—"
+    roi_sub = "Prix installation non renseigné"
+    if rentabilite:
+        roi_ans = rentabilite["temps_retour_ans"]
+        roi_value = f"{roi_ans} ans"
+        roi_sub = f"Économies : {rentabilite['economies_annuelles']:,.0f} FCFA/an"
+        roi_class = "green" if roi_ans <= 10 else "dark"
 
-        lignes_base = ""
-        lignes_base += f"<tr><td>Puissance installée</td><td><strong>{dim['puissance_installee_kwc']} kWc</strong></td></tr>"
-        lignes_base += f"<tr><td>Nombre de panneaux</td><td><strong>{dim['nombre_panneaux']} × {dim['puissance_panneau_wc']} Wc</strong></td></tr>"
-        lignes_base += f"<tr><td>Capacité batterie</td><td><strong>{dim['batterie']['capacite_ah']} Ah — {dim['batterie']['tension_v']} V</strong></td></tr>"
-        lignes_base += f"<tr><td>Autonomie</td><td><strong>{dim['batterie']['autonomie_jours']} jour(s)</strong></td></tr>"
-        lignes_base += f"<tr><td>Onduleur recommandé</td><td><strong>{dim['puissance_onduleur_recommandee_kva']} kVA</strong></td></tr>"
+    st.markdown(f"""
+    <div class='kpi-row'>
+        <div class='kpi-card dark'>
+            <div class='kpi-label'>Puissance installée</div>
+            <div class='kpi-value'>{dim['puissance_installee_kwc']} kWc</div>
+            <div class='kpi-sub'>{dim['nombre_panneaux']} × {dim['puissance_panneau_wc']} Wc</div>
+        </div>
+        <div class='kpi-card light'>
+            <div class='kpi-label'>Batterie</div>
+            <div class='kpi-value'>{dim['batterie']['capacite_ah']} Ah</div>
+            <div class='kpi-sub'>{dim['batterie']['tension_v']} V — {dim['batterie']['autonomie_jours']} jour(s)</div>
+        </div>
+        <div class='kpi-card light'>
+            <div class='kpi-label'>Onduleur recommandé</div>
+            <div class='kpi-value'>{dim['puissance_onduleur_recommandee_kva']} kVA</div>
+            <div class='kpi-sub'>Off-grid</div>
+        </div>
+        <div class='kpi-card {roi_class}'>
+            <div class='kpi-label'>Retour investissement</div>
+            <div class='kpi-value'>{roi_value}</div>
+            <div class='kpi-sub'>{roi_sub}</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
-        if rentabilite:
-            lignes_base += f"<tr><td>Retour sur investissement</td><td><strong>{rentabilite['temps_retour_ans']} ans</strong></td></tr>"
-            lignes_base += f"<tr><td>Économies annuelles</td><td><strong>{rentabilite['economies_annuelles']:,.0f} FCFA</strong></td></tr>"
+    # ---- Zone 2 : Component Cards ----
+    strings_html = ""
+    if dim.get("configuration_strings"):
+        for s in dim["configuration_strings"].get("strings", []):
+            if s.get("nb_panneaux_affectes", 0) > 0:
+                strings_html += f"<div class='cc-row'><span>Entrée PV {s['numero_string']}</span><span>{s['nb_serie_affecte']}S × {s['nb_parallele_affecte']}P</span></div>"
 
-        table_base = "<table class='result-table'>"
-        table_base += "<thead><tr><th colspan='2'>⚡ BASE</th></tr></thead>"
-        table_base += "<tbody>" + lignes_base + "</tbody>"
-        table_base += "</table>"
-        st.markdown(table_base, unsafe_allow_html=True)
+    surface_html = ""
+    if dim.get("surface_champ"):
+        surface_html = f"<div class='cc-row'><span>Surface champ</span><span>{dim['surface_champ']['surface_totale_m2']} m²</span></div>"
 
-        # --- Tableau enrichi ---
-        lignes_enrichies = ""
+    batterie_html = f"""
+        <div class='cc-row'><span>Configuration</span><span>—</span></div>
+        <div class='cc-row'><span>Nb batteries</span><span>—</span></div>
+        <div class='cc-row'><span>Tension parc</span><span>{dim['batterie']['tension_v']} V</span></div>
+        <div class='cc-row'><span>Capacité réelle</span><span>{dim['batterie']['capacite_ah']} Ah</span></div>
+    """
+    if dim.get("configuration_batterie"):
+        cb = dim["configuration_batterie"]
+        batterie_html = f"""
+            <div class='cc-row'><span>Configuration</span><span>{cb['nb_batteries_serie']}S × {cb['nb_batteries_parallele']}P</span></div>
+            <div class='cc-row'><span>Nb batteries</span><span>{cb['nb_batteries_total']} unités</span></div>
+            <div class='cc-row'><span>Tension parc</span><span>{cb['tension_parc_v']} V</span></div>
+            <div class='cc-row'><span>Capacité réelle</span><span>{cb['capacite_reelle_ah']} Ah</span></div>
+        """
 
-        if dim.get("configuration_strings"):
-            for s in dim["configuration_strings"].get("strings", []):
-                if s.get("nb_panneaux_affectes", 0) > 0:
-                    n = s["numero_string"]
-                    lignes_enrichies += f"<tr><td>Entrée PV {n} — Série</td><td><strong>{s['nb_serie_affecte']} panneaux</strong></td></tr>"
-                    lignes_enrichies += f"<tr><td>Entrée PV {n} — Parallèle</td><td><strong>{s['nb_parallele_affecte']} string(s)</strong></td></tr>"
-                    lignes_enrichies += f"<tr><td>Entrée PV {n} — Total affecté</td><td><strong>{s['nb_panneaux_affectes']} panneaux</strong></td></tr>"
-                    if s.get("nb_serie_min") and s.get("nb_serie_max_mppt"):
-                        lignes_enrichies += f"<tr><td>Entrée PV {n} — Plage série</td><td><strong>{s['nb_serie_min']} à {s['nb_serie_max_mppt']}</strong></td></tr>"
-                    if s.get("tension_string_v"):
-                        lignes_enrichies += f"<tr><td>Entrée PV {n} — Tension</td><td><strong>{s['tension_string_v']} V</strong></td></tr>"
+    source = "Équipements" if dim["source_consommation"] == "equipements" else "Factures"
 
-        if dim.get("surface_champ"):
-            sf = dim["surface_champ"]
-            lignes_enrichies += f"<tr><td>Surface champ PV</td><td><strong>{sf['surface_totale_m2']} m²</strong></td></tr>"
-            lignes_enrichies += f"<tr><td>Surface par module</td><td><strong>{sf['surface_module_m2']} m²</strong></td></tr>"
+    st.markdown(f"""
+    <div class='component-cards-row'>
+        <div class='component-card'>
+            <div class='cc-title'>🔆 Panneaux PV</div>
+            <div class='cc-row'><span>Nb panneaux</span><span>{dim['nombre_panneaux']}</span></div>
+            <div class='cc-row'><span>Puissance unitaire</span><span>{dim['puissance_panneau_wc']} Wc</span></div>
+            {strings_html}
+            {surface_html}
+        </div>
+        <div class='component-card'>
+            <div class='cc-title'>🔋 Parc Batterie</div>
+            {batterie_html}
+        </div>
+        <div class='component-card'>
+            <div class='cc-title'>📄 Fiche technique</div>
+            <div class='cc-row'><span>Consommation</span><span>{dim['consommation_journaliere_kwh']} kWh/j</span></div>
+            <div class='cc-row'><span>Source</span><span>{source}</span></div>
+            <div class='cc-row'><span>HSP utilisé</span><span>{dim['hsp_utilise']} h/j</span></div>
+            <div class='cc-row'><span>Performance Ratio</span><span>{PERFORMANCE_RATIO_DEFAULT}</span></div>
+            <div class='cc-row'><span>DoD batterie</span><span>{int(dim['batterie']['profondeur_decharge'] * 100)} %</span></div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
-        if dim.get("configuration_batterie"):
-            cb = dim["configuration_batterie"]
-            lignes_enrichies += f"<tr><td>Configuration batterie</td><td><strong>{cb['nb_batteries_serie']}S × {cb['nb_batteries_parallele']}P</strong></td></tr>"
-            lignes_enrichies += f"<tr><td>Nombre total batteries</td><td><strong>{cb['nb_batteries_total']} unités</strong></td></tr>"
-            lignes_enrichies += f"<tr><td>Tension parc batterie</td><td><strong>{cb['tension_parc_v']} V</strong></td></tr>"
-            lignes_enrichies += f"<tr><td>Capacité réelle</td><td><strong>{cb['capacite_reelle_ah']} Ah</strong></td></tr>"
+    # ---- Avertissements ----
+    avertissements = []
+    if dim.get("configuration_strings"):
+        avertissements.extend(dim["configuration_strings"].get("avertissements", []))
+        non_affectes = dim["configuration_strings"].get("panneaux_non_affectes", 0)
+        if non_affectes > 0:
+            avertissements.append(f"⚠️ {non_affectes} panneau(x) non affecté(s)")
+    if dim.get("configuration_batterie") and dim["configuration_batterie"].get("avertissement_tension"):
+        avertissements.append(dim["configuration_batterie"]["avertissement_tension"])
+    for avert in avertissements:
+        st.warning(avert)
 
-        if lignes_enrichies:
-            table_enrichi = "<table class='result-table' style='margin-top: 16px;'>"
-            table_enrichi += "<thead><tr><th colspan='2'>🔧 DÉTAILS COMPOSANTS</th></tr></thead>"
-            table_enrichi += "<tbody>" + lignes_enrichies + "</tbody>"
-            table_enrichi += "</table>"
-            st.markdown(table_enrichi, unsafe_allow_html=True)
+    # ---- Zone 3 : Graphe + Export ----
+    if rentabilite:
+        st.subheader("💰 Projection rentabilité 10 ans")
+        afficher_graphe_rentabilite(rentabilite)
+    else:
+        st.info("💡 Renseignez le prix total de l'installation dans **Configurations → Paramètres économiques** pour voir la rentabilité.")
 
-        # --- Avertissements ---
-        avertissements = []
-        if dim.get("configuration_strings"):
-            avertissements.extend(dim["configuration_strings"].get("avertissements", []))
-            non_affectes = dim["configuration_strings"].get("panneaux_non_affectes", 0)
-            if non_affectes > 0:
-                avertissements.append(f"⚠️ {non_affectes} panneau(x) non affecté(s)")
-
-        if dim.get("configuration_batterie") and dim["configuration_batterie"].get("avertissement_tension"):
-            avertissements.append(dim["configuration_batterie"]["avertissement_tension"])
-
-        if avertissements:
-            st.markdown("<br>", unsafe_allow_html=True)
-            for avert in avertissements:
-                st.warning(avert)
-
-    # ----------------------------
-    # COLONNE DROITE : GRAPHE + FICHE TECHNIQUE
-    # ----------------------------
-    with col_graphe:
-        if rentabilite:
-            st.subheader("💰 Projection rentabilité 10 ans")
-            afficher_graphe_rentabilite(rentabilite)
-        else:
-            st.info("💡 Renseignez le prix total de l'installation dans **Configurations → Paramètres économiques**.")
-
-        st.markdown("---")
-        st.subheader("📄 Fiche technique")
-
-        lignes_fiche = ""
-        lignes_fiche += f"<tr><td>Consommation journalière</td><td><strong>{dim['consommation_journaliere_kwh']} kWh/j</strong></td></tr>"
-        lignes_fiche += f"<tr><td>Source consommation</td><td><strong>{'Équipements' if dim['source_consommation'] == 'equipements' else 'Factures'}</strong></td></tr>"
-        lignes_fiche += f"<tr><td>HSP utilisé</td><td><strong>{dim['hsp_utilise']} h/j</strong></td></tr>"
-        lignes_fiche += f"<tr><td>Performance Ratio</td><td><strong>{PERFORMANCE_RATIO_DEFAULT}</strong></td></tr>"
-        lignes_fiche += f"<tr><td>Puissance crête nécessaire</td><td><strong>{dim['puissance_crete_necessaire_wc']} Wc</strong></td></tr>"
-        lignes_fiche += f"<tr><td>Profondeur de décharge</td><td><strong>{int(dim['batterie']['profondeur_decharge'] * 100)} %</strong></td></tr>"
-        if rentabilite:
-            lignes_fiche += f"<tr><td>Coût installation</td><td><strong>{rentabilite['cout_total_installation']:,.0f} FCFA</strong></td></tr>"
-
-        table_fiche = "<table class='result-table'>"
-        table_fiche += "<thead><tr><th colspan='2'>📄 FICHE TECHNIQUE</th></tr></thead>"
-        table_fiche += "<tbody>" + lignes_fiche + "</tbody>"
-        table_fiche += "</table>"
-        st.markdown(table_fiche, unsafe_allow_html=True)
-
-    # --- Export PDF ---
     st.markdown("<br>", unsafe_allow_html=True)
     try:
         pdf_bytes = generer_pdf_dimensionnement(
@@ -154,7 +157,7 @@ def afficher_metriques_dimensionnement() -> None:
         st.download_button(
             label="📥 Exporter en PDF",
             data=pdf_bytes,
-            file_name=f"dimensionnement_{ville}_{datetime.now().strftime('%Y%m%d')}.pdf",
+            file_name=f"raana_{ville}_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf",
             mime="application/pdf",
             use_container_width=True,
             type="primary"
@@ -205,6 +208,41 @@ def afficher_graphe_rentabilite(rentabilite: dict) -> None:
 
 def afficher_rapport_agent() -> None:
     if "dim" not in st.session_state:
-        st.info("💡 Lancez d'abord une analyse depuis l'accueil.")
+        st.info("💡 Lancez d'abord une analyse depuis l'étape **Analyse** avant de consulter l'agent.")
+        if st.button("→ Aller à l'analyse", type="primary"):
+            st.session_state.page_active = "Analyse"
+            st.rerun()
         return
-    st.info("🚧 Fonctionnalité en cours de développement — disponible prochainement.")
+
+    st.write("Posez une question à l'agent IA solaire. Il a accès à vos données de projet.")
+    st.caption("Exemples : *Optimise ma configuration*, *Explique le calcul de batterie*, *Quel panneau recommandes-tu ?*")
+
+    question = st.text_area(
+        "Votre question",
+        placeholder="Ex: Explique-moi le dimensionnement et propose des optimisations...",
+        height=100,
+        label_visibility="collapsed"
+    )
+
+    if st.button("🤖 Envoyer à l'agent", type="primary", use_container_width=True, disabled=not question.strip()):
+        with st.spinner("L'agent analyse votre projet..."):
+            try:
+                from agent.agent import creer_agent
+                agent = creer_agent()
+                result = agent.invoke({"messages": [{"role": "user", "content": question.strip()}]})
+                messages = result.get("messages", [])
+                # Récupérer le dernier message de l'agent (pas un ToolMessage)
+                reponse = ""
+                for msg in reversed(messages):
+                    if hasattr(msg, "content") and msg.content and not hasattr(msg, "tool_call_id"):
+                        reponse = msg.content
+                        break
+                if reponse:
+                    st.markdown("---")
+                    st.markdown("**Réponse de l'agent :**")
+                    st.markdown(reponse)
+                else:
+                    st.warning("L'agent n'a pas retourné de réponse textuelle.")
+            except Exception as e:
+                logger.error("Erreur agent IA : %s", e)
+                st.error(f"❌ Erreur de l'agent : {e}")

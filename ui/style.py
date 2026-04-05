@@ -401,7 +401,7 @@ def get_css():
         .result-table thead th {
             padding: 12px 16px;
             text-align: left;
-            font-size: 24px;
+            font-size: 14px;
             font-weight: 600;
             letter-spacing: 0.5px;
         }
@@ -520,6 +520,216 @@ def get_css():
         [data-testid="stMetricValue"] {
             color: #1B2A4A !important;
             font-weight: bold !important;
+        }
+
+    /* =================== WIZARD BAR ====================== */
+        .wizard-bar {
+            display: flex;
+            align-items: center;
+            background: #0e1f3a;
+            padding: 12px 24px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            gap: 0;
+        }
+        .wizard-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            position: relative;
+            cursor: pointer;
+        }
+        .wizard-step-circle {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: bold;
+            z-index: 1;
+            transition: all 0.2s;
+        }
+        .wizard-step-circle.done { background: #27AE60; color: white; }
+        .wizard-step-circle.active { background: #F4A300; color: white; box-shadow: 0 0 0 3px rgba(244,163,0,0.3); }
+        .wizard-step-circle.pending { background: #333; color: #888; }
+        .wizard-step-label {
+            font-size: 10px;
+            margin-top: 4px;
+            white-space: nowrap;
+        }
+        .wizard-step-label.done { color: #27AE60; }
+        .wizard-step-label.active { color: #F4A300; font-weight: bold; }
+        .wizard-step-label.pending { color: #666; }
+        .wizard-connector {
+            flex: 1;
+            height: 2px;
+            margin-bottom: 14px;
+        }
+        .wizard-connector.done { background: #27AE60; }
+        .wizard-connector.pending { background: #333; }
+        .wizard-nav {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 24px;
+            padding-top: 16px;
+            border-top: 1px solid #e0e0e0;
+        }
+        .wizard-nav-btn {
+            padding: 8px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+    /* =================== KPI CARDS (résultats) =================== */
+        .kpi-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .kpi-card {
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+        .kpi-card.dark { background: #1B2A4A; }
+        .kpi-card.light { background: white; border-left: 3px solid #F4A300; }
+        .kpi-card.green { background: #27AE60; }
+        .kpi-card.gray { background: #f0f0f0; }
+        .kpi-card .kpi-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+        .kpi-card.dark .kpi-label { color: #F4A300; }
+        .kpi-card.light .kpi-label { color: #F4A300; }
+        .kpi-card.green .kpi-label { color: #c8f5d8; }
+        .kpi-card.gray .kpi-label { color: #888; }
+        .kpi-card .kpi-value {
+            font-size: 24px;
+            font-weight: bold;
+            line-height: 1.1;
+        }
+        .kpi-card.dark .kpi-value { color: white; }
+        .kpi-card.light .kpi-value { color: #1B2A4A; }
+        .kpi-card.green .kpi-value { color: white; }
+        .kpi-card.gray .kpi-value { color: #555; }
+        .kpi-card .kpi-sub {
+            font-size: 11px;
+            margin-top: 4px;
+        }
+        .kpi-card.dark .kpi-sub { color: #aaa; }
+        .kpi-card.light .kpi-sub { color: #888; }
+        .kpi-card.green .kpi-sub { color: #c8f5d8; }
+        .kpi-card.gray .kpi-sub { color: #aaa; }
+
+    /* =================== COMPONENT CARDS (résultats) =================== */
+        .component-cards-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .component-card {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+        }
+        .component-card .cc-title {
+            font-size: 12px;
+            font-weight: bold;
+            color: #1B2A4A;
+            margin-bottom: 10px;
+            padding-bottom: 6px;
+            border-bottom: 2px solid #F4A300;
+        }
+        .component-card .cc-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            padding: 3px 0;
+            border-bottom: 1px solid #f5f5f5;
+        }
+        .component-card .cc-row span:first-child { color: #888; }
+        .component-card .cc-row span:last-child { color: #1B2A4A; font-weight: 600; }
+
+    /* =================== CONSUMPTION COUNTER =================== */
+        .consumption-counter {
+            background: #1B2A4A;
+            border-radius: 12px;
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .consumption-counter .cc-left .cc-label {
+            font-size: 10px;
+            color: #F4A300;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .consumption-counter .cc-left .cc-total {
+            font-size: 28px;
+            font-weight: bold;
+            color: white;
+        }
+        .consumption-counter .cc-right { text-align: right; }
+        .consumption-counter .cc-right .cc-kwh {
+            font-size: 18px;
+            font-weight: bold;
+            color: #F4A300;
+        }
+        .consumption-counter .cc-right .cc-count {
+            font-size: 11px;
+            color: #27AE60;
+        }
+
+    /* =================== DISTRIBUTION BARS =================== */
+        .distrib-bar-container { margin-bottom: 4px; }
+        .distrib-bar-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 3px;
+        }
+        .distrib-bar-track {
+            height: 8px;
+            background: #eee;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .distrib-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            background: #1B2A4A;
+        }
+        .distrib-bar-fill.secondary { background: #F4A300; }
+
+    /* =================== PULSE BOUTON ANALYSE =================== */
+        @keyframes pulse-orange {
+            0% { box-shadow: 0 0 0 0 rgba(244,163,0,0.5); }
+            70% { box-shadow: 0 0 0 10px rgba(244,163,0,0); }
+            100% { box-shadow: 0 0 0 0 rgba(244,163,0,0); }
+        }
+        .btn-pulse > button {
+            animation: pulse-orange 1.5s infinite !important;
+        }
+
+    /* =================== RESPONSIVE WIZARD MOBILE =================== */
+        @media (max-width: 768px) {
+            .wizard-bar { padding: 8px 12px; }
+            .wizard-step-label { display: none; }
+            .kpi-row { grid-template-columns: repeat(2, 1fr); }
+            .component-cards-row { grid-template-columns: 1fr; }
         }
             </style>
             """
