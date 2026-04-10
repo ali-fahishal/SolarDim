@@ -107,7 +107,7 @@ def afficher_formulaire_factures() -> None:
                             tmp.write(contenu)
                             chemin_temp = Path(tmp.name)
 
-                        donnees_validees = extraire_donnees_facture(str(chemin_temp), fichier.name)
+                        donnees_validees, erreur = extraire_donnees_facture(str(chemin_temp), fichier.name)
 
                         if donnees_validees:
                             sauvegarder_facture(donnees_validees)
@@ -118,7 +118,7 @@ def afficher_formulaire_factures() -> None:
                             )
                             nb_succes += 1
                         else:
-                            st.error(f"❌ Impossible d'extraire les données de {fichier.name}")
+                            st.error(f"❌ {fichier.name} — {erreur}")
                             nb_echec += 1
 
                     except Exception as e:

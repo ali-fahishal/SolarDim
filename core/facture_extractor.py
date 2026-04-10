@@ -146,10 +146,13 @@ def _extraire_depuis_pdf(chemin: Path) -> dict | None:
     return json.loads(_nettoyer_json(reponse.content.strip()))
 
 
-def extraire_donnees_facture(chemin_fichier: str, nom_fichier: str) -> dict | None:
+def extraire_donnees_facture(chemin_fichier: str, nom_fichier: str) -> tuple[dict | None, str | None]:
     """
     Point d'entrée principal — envoie la facture au LLM
     et récupère les données structurées.
+
+    Retourne : (données, None) en cas de succès
+               (None, message_erreur) en cas d'échec
     """
     try:
         path = _valider_chemin_fichier(chemin_fichier)
@@ -160,22 +163,28 @@ def extraire_donnees_facture(chemin_fichier: str, nom_fichier: str) -> dict | No
         elif extension == "pdf":
             donnees = _extraire_depuis_pdf(path)
         else:
-            return None
+            return None, f"Format non supporté : {extension}"
 
-        return valider_et_enrichir(donnees, nom_fichier)
+        resultat = valider_et_enrichir(donnees, nom_fichier)
+        if resultat is None:
+            return None, "Données extraites invalides ou hors plage (consommation, montant, durée)"
+        return resultat, None
 
     except FileNotFoundError as e:
         logger.error("Fichier introuvable : %s", e)
-        return None
+        return None, "Fichier introuvable"
     except ValueError as e:
         logger.error("Validation échouée pour %s : %s", nom_fichier, e)
-        return None
+        return None, f"Validation échouée : {e}"
     except json.JSONDecodeError as e:
         logger.error("Réponse LLM non JSON pour %s : %s", nom_fichier, e)
-        return None
+        return None, "Le modèle IA n'a pas retourné un JSON valide"
+    except EnvironmentError as e:
+        logger.error("Clé API manquante : %s", e)
+        return None, "Clé API Groq manquante ou invalide"
     except Exception as e:
-        logger.error("Erreur inattendue pour %s : %s", nom_fichier, type(e).__name__)
-        return None
+        logger.error("Erreur inattendue pour %s : %s — %s", nom_fichier, type(e).__name__, e)
+        return None, f"{type(e).__name__} : {str(e)[:120]}"
 
 
 # ==============================
