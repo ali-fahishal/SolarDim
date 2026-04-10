@@ -5,7 +5,7 @@ import streamlit as st
 import pandas as pd
 from pathlib import Path
 
-from core.facture_extractor import extraire_donnees_facture, valider_et_enrichir
+from core.facture_extractor import extraire_donnees_facture
 from core.storage import (
     ajouter_equipement, get_equipements,
     supprimer_equipement, effacer_equipements,
@@ -107,8 +107,7 @@ def afficher_formulaire_factures() -> None:
                             tmp.write(contenu)
                             chemin_temp = Path(tmp.name)
 
-                        donnees_brutes = extraire_donnees_facture(str(chemin_temp), fichier.name)
-                        donnees_validees = valider_et_enrichir(donnees_brutes, fichier.name)
+                        donnees_validees = extraire_donnees_facture(str(chemin_temp), fichier.name)
 
                         if donnees_validees:
                             sauvegarder_facture(donnees_validees)
@@ -132,7 +131,9 @@ def afficher_formulaire_factures() -> None:
 
             if nb_succes > 0:
                 st.info(f"📊 {nb_succes} facture(s) analysée(s) avec succès.")
-            st.rerun()
+                st.rerun()
+            elif nb_echec > 0:
+                st.warning(f"⚠️ {nb_echec} facture(s) n'ont pas pu être analysées. Vérifiez les fichiers et réessayez.")
 
 
 def afficher_formulaire_equipements() -> None:
