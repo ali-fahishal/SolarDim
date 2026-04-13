@@ -35,7 +35,7 @@ orjson==3.11.7
 ormsgpack==1.12.2
 packaging==26.0
 pandas==2.3.3
-pillow==12.1.1
+pillow==12.2.0
 plotly==6.5.2
 protobuf==6.33.5
 pyarrow==23.0.1
